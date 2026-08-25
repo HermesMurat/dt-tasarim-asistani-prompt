@@ -35,15 +35,11 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  // Open in light mode by default and remember an explicit user preference.
+  // Always start in light mode. Dark mode remains optional for the current session.
   useEffect(() => {
-    const isDark = localStorage.getItem("dt_theme") === "dark";
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.remove("dark");
+    localStorage.removeItem("dt_theme");
+    setDarkMode(false);
 
     try {
       const stored = localStorage.getItem("dt_design_archives");
@@ -63,7 +59,6 @@ export default function App() {
       } else {
         document.documentElement.classList.remove("dark");
       }
-      localStorage.setItem("dt_theme", next ? "dark" : "light");
       return next;
     });
   };
