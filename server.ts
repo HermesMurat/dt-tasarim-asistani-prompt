@@ -8,7 +8,7 @@ import { extractTextFromBuffer, ExtractedTextResult } from "./server/extractor.j
 import { getGeminiClient } from "./server/geminiClient.js";
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Configure body parsing and file uploads
 app.use(express.json({ limit: "50mb" }));

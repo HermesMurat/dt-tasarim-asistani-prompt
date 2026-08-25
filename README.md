@@ -29,3 +29,7 @@ Gerekenler: Node.js 20 veya üzeri ve bir Gemini API anahtarı.
 - Yayın paketini çalıştırma: `npm start`
 
 API anahtarını GitHub'a yüklemeyin. Anahtarı yalnızca çalıştırdığınız platformun gizli değişkenler bölümünde `GEMINI_API_KEY` adıyla saklayın.
+
+## Render ile yayınlama
+
+Proje kökündeki `render.yaml`, uygulamayı ücretsiz bir Render Web Service olarak kurar. Yayın sırasında `GEMINI_API_KEY` değeri Render'ın gizli ortam değişkenleri bölümüne girilmelidir. Ücretsiz servis 15 dakika kullanılmadığında uyur; sonraki ilk açılış yaklaşık bir dakika sürebilir.

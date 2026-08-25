@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: dt-tasarim-asistani-prompt
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: GEMINI_API_KEY
+        sync: false
