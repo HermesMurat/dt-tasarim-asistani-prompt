@@ -383,15 +383,23 @@ async function generateAnalysisResponse(
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
+      const config: any = {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: "application/json",
+      };
+
+      if (model.startsWith("gemini-2.5")) {
+        config.temperature = 0.2;
+        config.thinkingConfig = { thinkingBudget: 0 };
+      } else {
+        // Gemini 3.x sayısal thinkingBudget yerine thinkingLevel kullanır.
+        config.thinkingConfig = { thinkingLevel: "minimal" };
+      }
+
       const response = await ai.models.generateContent({
         model,
         contents: promptContent,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: "application/json",
-          temperature: 0.2,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
+        config,
       });
       return response.text || "";
     } catch (err: any) {
