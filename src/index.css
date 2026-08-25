@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+/* Koyu modu cihaz tercihinden değil, yalnızca uygulamadaki düğmeden yönet. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
