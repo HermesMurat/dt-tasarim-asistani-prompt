@@ -26,6 +26,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    release: process.env.RENDER_GIT_COMMIT?.slice(0, 7) || "local",
     timestamp: new Date().toISOString(),
   });
 });
