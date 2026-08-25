@@ -346,7 +346,7 @@ export function repairAndParseJson(raw: string): any {
 }
 
 const TEXT_MODEL = "gemini-2.5-flash";
-const FALLBACK_TEXT_MODEL = "gemini-2.5-flash-lite";
+const FALLBACK_TEXT_MODEL = "gemini-3.5-flash-lite";
 const MAX_FREE_ANALYSIS_CHARS = 300_000;
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 saat
 const MAX_CACHE_ITEMS = 30;
