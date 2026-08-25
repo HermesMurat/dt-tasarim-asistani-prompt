@@ -1,0 +1,6 @@
+{
+  "name": "DT Tasarım Asistanı",
+  "description": "Tiyatro oyun metinlerini okuyarak dramaturjik analiz, sahne ve kostüm tasarımı gereksinimlerini çıkaran profesyonel tasarım asistanı.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
