@@ -346,10 +346,69 @@ export function repairAndParseJson(raw: string): any {
 }
 
 const TEXT_MODEL = "gemini-2.5-flash";
+const FALLBACK_TEXT_MODEL = "gemini-2.5-flash-lite";
 const MAX_FREE_ANALYSIS_CHARS = 300_000;
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 saat
 const MAX_CACHE_ITEMS = 30;
 const analysisCache = new Map<string, { expiresAt: number; analysis: PlayAnalysisResult }>();
+
+function isTransientModelError(err: any): boolean {
+  const status = Number(err?.status || err?.statusCode || 0);
+  const message = String(err?.message || err || "").toLowerCase();
+  return (
+    status === 408 ||
+    status === 429 ||
+    status >= 500 ||
+    message.includes("resource_exhausted") ||
+    message.includes("unavailable") ||
+    message.includes("overloaded") ||
+    message.includes("timeout") ||
+    message.includes("etimedout") ||
+    message.includes("econnreset") ||
+    message.includes("fetch failed")
+  );
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateAnalysisResponse(
+  ai: ReturnType<typeof getGeminiClient>,
+  model: string,
+  promptContent: string,
+  maxAttempts: number
+): Promise<string> {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: promptContent,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: "application/json",
+          temperature: 0.2,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      });
+      return response.text || "";
+    } catch (err: any) {
+      lastError = err;
+      if (!isTransientModelError(err) || attempt === maxAttempts) throw err;
+
+      // 503/429 gibi geçici hatalarda kısa, artan ve küçük rastgele paylı bekleme.
+      const delayMs = 1_000 * 2 ** (attempt - 1) + Math.floor(Math.random() * 400);
+      console.warn(
+        `[Analyzer] '${model}' geçici hata verdi. ${delayMs} ms sonra yeniden deneniyor (${attempt}/${maxAttempts}).`
+      );
+      await wait(delayMs);
+    }
+  }
+
+  throw lastError;
+}
 
 function cacheKey(text: string): string {
   return createHash("sha256").update(text).digest("hex");
@@ -399,32 +458,12 @@ export async function analyzePlayText(
   try {
     console.log(`[Analyzer] '${TEXT_MODEL}' modeline tekil analiz isteği gönderiliyor (Karakter sayısı: ${text.length})...`);
     let responseText = "";
-    
+
     try {
-      const response = await ai.models.generateContent({
-        model: TEXT_MODEL,
-        contents: promptContent,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: "application/json",
-          temperature: 0.2,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      });
-      responseText = response.text || "";
+      responseText = await generateAnalysisResponse(ai, TEXT_MODEL, promptContent, 3);
     } catch (primaryErr: any) {
       console.warn(`[Analyzer] Primary model '${TEXT_MODEL}' failed, trying fallback:`, primaryErr?.message || primaryErr);
-      // Fallback attempt
-      const fallbackResponse = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
-        contents: promptContent,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: "application/json",
-          temperature: 0.2,
-        },
-      });
-      responseText = fallbackResponse.text || "";
+      responseText = await generateAnalysisResponse(ai, FALLBACK_TEXT_MODEL, promptContent, 2);
     }
 
     if (!responseText || responseText.trim().length === 0) {
@@ -463,7 +502,7 @@ export async function analyzePlayText(
       msg.includes("overloaded")
     ) {
       const error = new Error(
-        "Gemini modeli şu anda geçici olarak kullanılamıyor veya aşırı yüklü (503). Lütfen bir süre sonra tekrar deneyiniz."
+        "Gemini modelleri otomatik olarak yeniden denendi ancak hizmet hâlâ geçici olarak yoğun (503). Lütfen birkaç dakika sonra Tekrar Dene düğmesine basınız."
       );
       (error as any).code = "MODEL_UNAVAILABLE";
       throw error;
@@ -495,4 +534,3 @@ export async function analyzePlayText(
     throw error;
   }
 }
-
