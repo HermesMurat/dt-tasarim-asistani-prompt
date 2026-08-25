@@ -33,11 +33,12 @@ export default function App() {
 
   const [archives, setArchives] = useState<SavedArchive[]>([]);
   const [toasts, setToasts] = useState<ToastData[]>([]);
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  // Initialize Dark Mode & Archives
+  // Open in light mode by default and remember an explicit user preference.
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark") || true;
+    const isDark = localStorage.getItem("dt_theme") === "dark";
+    setDarkMode(isDark);
     if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
@@ -62,6 +63,7 @@ export default function App() {
       } else {
         document.documentElement.classList.remove("dark");
       }
+      localStorage.setItem("dt_theme", next ? "dark" : "light");
       return next;
     });
   };
